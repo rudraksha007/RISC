@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ApplicationType {
+  JOIN
+  COMPONENT
+  DL
+  QUERY
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum Year {
+  FIRST
+  SECOND
+  THIRD
+  FOURTH
+  FIFTH
+}
+
+model User {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  isMember    Boolean  @default(false)
+  isBanned    Boolean  @default(false)
+  isAdmin     Boolean  @default(false)
+  name        String
+  email       String  @unique
+  regno       Int     @unique
+  password    String
+
+  // User Information
+  age      Int?
+  gender   String?
+  username String? @unique
+  avatar   String?
+  bio      String? @db.Text
+  year     Year?  // Added the Year enum field
+
+  // Relations - Social
+  posts         Post[]     @relation("PostAuthor")
+  likes         Post[]     @relation("PostLikes")
+  commentLikes  Comment[]  @relation("CommentLikes")
+  applications  Application[]
+  comments      Comment[]
+  @@index([username])
+}
+
+
+model Post {
+  id        String       @id @default(uuid())
+  content   String       @db.Text
+  title     String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  isPrivate Boolean      @default(false)
+  authorId  String
+  author    User         @relation(fields: [authorId], references: [id], name: "PostAuthor")
+  likes     User[]       @relation("PostLikes")
+  media     String[]
+  comments  Comment[]
+  
+  @@index([authorId]) 
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId   String
+  authorId   String
+  author   User?   @relation(fields: [authorId], references: [id])
+  post   Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes  User[]  @relation("CommentLikes")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Application {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  authorId       String
+  author         User     @relation(fields: [authorId], references: [id])
+  data           Json
+  applicationType ApplicationType
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  name        String
+  date        DateTime
+  joiningLink String
+  poster      String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
