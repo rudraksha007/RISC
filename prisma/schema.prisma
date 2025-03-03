@@ -115,6 +115,12 @@ model Comment {
   @@index([createdAt])
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Application {
   id              String          @id @default(uuid())
   createdAt       DateTime        @default(now())
@@ -123,6 +129,7 @@ model Application {
   author          User            @relation(fields: [authorId], references: [id])
   data            Json
   applicationType ApplicationType
+  status          ApplicationStatus
 }
 
 model Event {

@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     Plus,
     Search,
-    Filter,
-    ArrowUpDown,
     Rocket,
     Calendar,
     DollarSign,
@@ -32,92 +29,69 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InnerLayout from "../innerLayout";
+import { toast } from "sonner";
+import { Project } from "@prisma/client";
 
-// Sample project data
-const projects = [
-    {
-        id: "1",
-        name: "Autonomous Delivery Robot",
-        description: "Building a robot that can navigate campus to deliver packages autonomously.",
-        status: "active",
-        progress: 65,
-        budget: 25000,
-        duration: "3 months",
-        techStacks: ["ROS", "Computer Vision", "Arduino", "3D Printing"],
-        members: 8,
-        createdAt: "2024-03-15",
-    },
-    {
-        id: "2",
-        name: "Smart Agriculture Drone",
-        description: "Developing a drone for monitoring crop health and automated irrigation.",
-        status: "planning",
-        progress: 20,
-        budget: 35000,
-        duration: "4 months",
-        techStacks: ["Raspberry Pi", "IoT", "Machine Learning", "Sensors"],
-        members: 6,
-        createdAt: "2024-04-01",
-    },
-    {
-        id: "3",
-        name: "Robotic Arm for Medical Assistance",
-        description: "Creating a precision robotic arm to assist in medical procedures.",
-        status: "completed",
-        progress: 100,
-        budget: 50000,
-        duration: "6 months",
-        techStacks: ["C++", "Microcontrollers", "PCB Design", "Actuators"],
-        members: 10,
-        createdAt: "2023-11-10",
-    },
-    {
-        id: "4",
-        name: "Swarm Robotics Research",
-        description: "Researching coordination algorithms for multiple robots working together.",
-        status: "active",
-        progress: 40,
-        budget: 30000,
-        duration: "5 months",
-        techStacks: ["Python", "Machine Learning", "Embedded Systems", "Sensors"],
-        members: 7,
-        createdAt: "2024-02-20",
-    },
-];
+function getStatus(startDate: Date, duration: number) {
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + duration);
+    return new Date() > endDate ? "completed" : "active";
+}
+
+function getProgress(startDate: Date, duration: number) {
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + duration);
+    if(new Date() > endDate) return 100;
+    return Math.floor((new Date().getDate()-new Date(startDate).getDate())/duration);
+}
 
 export default function ProjectsPage() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [currentTab, setCurrentTab] = useState("all");
+    const [projects, setProjects] = useState<Project[] | []>([]);
+    const [filteredProjects, setFilteredProjects] = useState<Project[]|[]>([]);
 
-    const filteredProjects = projects.filter((project) => {
-        const matchesSearch =
-            searchQuery === "" ||
-            project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            project.description.toLowerCase().includes(searchQuery.toLowerCase());
+    useEffect(() => {
+        async function fetchProjects() {
+            try {
+                const response = await fetch("/api/projects");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch projects");
+                }
+                const data = await response.json();
+                console.log(data);
+                setProjects(data);
+            } catch (error) {
+                console.error("Error fetching projects:", error);
+                toast.error("Failed to fetch projects");
+            }
+        }
+        fetchProjects();
+    }, []);
 
-        const matchesStatus =
-            statusFilter === "all" || project.status === statusFilter;
-
-        const matchesTab =
-            currentTab === "all" ||
-            (currentTab === "active" && project.status === "active") ||
-            (currentTab === "planning" && project.status === "planning") ||
-            (currentTab === "completed" && project.status === "completed");
-
-        return matchesSearch && matchesStatus && matchesTab;
-    });
+    useEffect(()=>{
+        setFilteredProjects(projects.filter((project) => {
+            const matchesSearch =
+                searchQuery === "" ||
+                project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                project.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+            const matchesStatus =
+                statusFilter === "all" || getStatus(project.createdAt, project.duration) === statusFilter;
+    
+            const matchesTab =
+                currentTab === "all" ||
+                (currentTab === "active" && getStatus(project.createdAt, project.duration) === "active") ||
+                (currentTab === "completed" && getStatus(project.createdAt, project.duration) === "completed");
+    
+            return matchesSearch && matchesStatus && matchesTab;
+        }));
+    }, [projects, statusFilter, currentTab]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -163,27 +137,12 @@ export default function ProjectsPage() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[180px]">
-                            <div className="flex items-center">
-                                <Filter className="mr-2 h-4 w-4" />
-                                <SelectValue placeholder="Filter by status" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="planning">Planning</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                    </Select> */}
                 </div>
 
                 <Tabs value={currentTab} onValueChange={setCurrentTab}>
                     <TabsList>
                         <TabsTrigger value="all">All Projects</TabsTrigger>
                         <TabsTrigger value="active">Active</TabsTrigger>
-                        <TabsTrigger value="planning">Planning</TabsTrigger>
                         <TabsTrigger value="completed">Completed</TabsTrigger>
                     </TabsList>
 
@@ -201,10 +160,10 @@ export default function ProjectsPage() {
                                             <div className="flex justify-between items-start">
                                                 <Badge
                                                     className={`${getStatusColor(
-                                                        project.status
+                                                        getStatus(project.createdAt, project.duration)
                                                     )} capitalize`}
                                                 >
-                                                    {project.status}
+                                                    {getStatus(project.createdAt, project.duration)}
                                                 </Badge>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -243,12 +202,12 @@ export default function ProjectsPage() {
                                                     <div className="w-full bg-muted rounded-full h-2">
                                                         <div
                                                             className="bg-primary h-2 rounded-full"
-                                                            style={{ width: `${project.progress}%` }}
+                                                            style={{ width: `${getProgress(project.createdAt, project.duration)}%` }}
                                                         ></div>
                                                     </div>
                                                     <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Progress</span>
-                                                        <span>{project.progress}%</span>
+                                                        <span>{getProgress(project.createdAt, project.duration)}%</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -264,7 +223,8 @@ export default function ProjectsPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Users className="h-4 w-4 text-muted-foreground" />
-                                                    <span>{project.members} members</span>
+                                                    {/**@ts-ignore-next-line */}
+                                                    <span>{project.members?.length} members</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Code className="h-4 w-4 text-muted-foreground" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FileText, Search, Filter, ArrowDown, ArrowUp, CheckCircle, XCircle, MoreHorizontal, Clock } from "lucide-react";
 import {
@@ -31,84 +31,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
     Tabs,
-    TabsContent,
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs";
 import InnerLayout from "../innerLayout";
-
-// Sample data for applications
-const applicationsData = [
-    {
-        id: 1,
-        name: "Alex Johnson",
-        regNo: "R2023045",
-        type: "Project Membership",
-        project: "Autonomous Delivery Robot",
-        status: "pending",
-        submittedOn: "Feb 15, 2025"
-    },
-    {
-        id: 2,
-        name: "Maria Garcia",
-        regNo: "R2023089",
-        type: "Event Participation",
-        event: "National Robotics Championship 2025",
-        status: "approved",
-        submittedOn: "Feb 10, 2025"
-    },
-    {
-        id: 3,
-        name: "Thomas Wu",
-        regNo: "R2022132",
-        type: "Project Membership",
-        project: "Computer Vision for Object Detection",
-        status: "pending",
-        submittedOn: "Feb 18, 2025"
-    },
-    {
-        id: 4,
-        name: "Sophia Martinez",
-        regNo: "R2023056",
-        type: "Club Membership",
-        team: "Programming Division",
-        status: "pending",
-        submittedOn: "Feb 20, 2025"
-    },
-    {
-        id: 5,
-        name: "James Park",
-        regNo: "R2023077",
-        type: "Project Lead",
-        project: "Medical Assistance Robot",
-        status: "rejected",
-        submittedOn: "Feb 5, 2025"
-    },
-    {
-        id: 6,
-        name: "Emma Wilson",
-        regNo: "R2022098",
-        type: "Club Membership",
-        team: "Hardware Division",
-        status: "approved",
-        submittedOn: "Feb 8, 2025"
-    },
-    {
-        id: 7,
-        name: "Daniel Lee",
-        regNo: "R2023112",
-        type: "Event Participation",
-        event: "Local Tech Exhibition",
-        status: "pending",
-        submittedOn: "Feb 17, 2025"
-    }
-];
+import { Application, ApplicationStatus } from "@prisma/client";
 
 export default function ApplicationsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("all");
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+    const [applicationsData, setApplicationsData] = useState<Application[]|[]>([]);
 
+    useEffect(()=>{
+        async function fetchData(){
+            const data = await fetch('/api/applications');
+            const applications = await data.json();
+            setApplicationsData(applications);
+            console.log(applications);
+        }
+        fetchData();
+
+    }, []);
     // Handle sorting
     const requestSort = (key: any) => {
         let direction = 'asc';
@@ -122,14 +66,13 @@ export default function ApplicationsPage() {
     const getSortedApplications = () => {
         let filteredItems = applicationsData.filter(app => {
             const matchesSearch =
-                app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                app.regNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                app.type.toLowerCase().includes(searchQuery.toLowerCase());
+            //@ts-ignore
+                app.author.name.toLowerCase().includes(searchQuery.toLowerCase()) || app.regNo.toLowerCase().includes(searchQuery.toLowerCase()) || app.type.toLowerCase().includes(searchQuery.toLowerCase());
 
             if (activeTab === "all") return matchesSearch;
-            if (activeTab === "pending") return matchesSearch && app.status === "pending";
-            if (activeTab === "approved") return matchesSearch && app.status === "approved";
-            if (activeTab === "rejected") return matchesSearch && app.status === "rejected";
+            if (activeTab === "pending") return matchesSearch && app.status === ApplicationStatus.PENDING;
+            if (activeTab === "approved") return matchesSearch && app.status === ApplicationStatus.APPROVED;
+            if (activeTab === "rejected") return matchesSearch && app.status === ApplicationStatus.REJECTED;
 
             return matchesSearch;
         });
@@ -312,10 +255,12 @@ export default function ApplicationsPage() {
                                         const statusBadge = getStatusBadge(application.status);
                                         return (
                                             <TableRow key={application.id}>
-                                                <TableCell className="font-medium">{application.name}</TableCell>
-                                                <TableCell>{application.regNo}</TableCell>
-                                                <TableCell>{application.type}</TableCell>
-                                                <TableCell>{application.submittedOn}</TableCell>
+                                                {/**@ts-ignore */}
+                                                <TableCell className="font-medium">{application.author?.name}</TableCell>
+                                                {/**@ts-ignore */}
+                                                <TableCell>{application.author?.regno}</TableCell>
+                                                <TableCell>{application.applicationType}</TableCell>
+                                                <TableCell>{application.createdAt.toString().split('T')[0]}</TableCell>
                                                 <TableCell>
                                                     <Badge className={statusBadge.class}>
                                                         <span className="flex items-center gap-1">
