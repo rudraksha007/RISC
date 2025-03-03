@@ -12,6 +12,7 @@ import {
     SheetContent,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import { SessionProvider } from "next-auth/react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },

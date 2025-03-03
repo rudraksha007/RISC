@@ -15,10 +15,34 @@ enum ApplicationType {
   QUERY
 }
 
+enum TechStacks {
+  ARDUINO
+  RASPBERRY_PI
+  PYTHON
+  CPP
+  ROS
+  TENSORFLOW
+  PYTORCH
+  COMPUTER_VISION
+  MACHINE_LEARNING
+  IOT
+  EMBEDDED_SYSTEMS
+  PCB_DESIGN
+  THREE_D_PRINTING
+  CAD
+  SENSORS
+  ACTUATORS
+  MICROCONTROLLERS
+  WEB_DEVELOPMENT
+  MOBILE_APP
+  CLOUD_SERVICES
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 enum Year {
   FIRST
   SECOND
@@ -28,15 +52,15 @@ enum Year {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  isMember    Boolean  @default(false)
-  isBanned    Boolean  @default(false)
-  isAdmin     Boolean  @default(false)
-  name        String
-  email       String  @unique
-  regno       Int     @unique
-  password    String
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  isMember  Boolean  @default(false)
+  isBanned  Boolean  @default(false)
+  isAdmin   Boolean  @default(false)
+  name      String
+  email     String   @unique
+  regno     Int      @unique
+  password  String
 
   // User Information
   age      Int?
@@ -44,32 +68,34 @@ model User {
   username String? @unique
   avatar   String?
   bio      String? @db.Text
-  year     Year?  // Added the Year enum field
+  year     Year? // Added the Year enum field
 
   // Relations - Social
-  posts         Post[]     @relation("PostAuthor")
-  likes         Post[]     @relation("PostLikes")
-  commentLikes  Comment[]  @relation("CommentLikes")
-  applications  Application[]
-  comments      Comment[]
+  posts        Post[]        @relation("PostAuthor")
+  likes        Post[]        @relation("PostLikes")
+  commentLikes Comment[]     @relation("CommentLikes")
+  applications Application[]
+  comments     Comment[]
+  projects     Project[]     @relation("ProjectMembers")
+  leadProjects Project[]
+
   @@index([username])
 }
 
-
 model Post {
-  id        String       @id @default(uuid())
-  content   String       @db.Text
+  id        String    @id @default(uuid())
+  content   String    @db.Text
   title     String
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  isPrivate Boolean      @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isPrivate Boolean   @default(false)
   authorId  String
-  author    User         @relation(fields: [authorId], references: [id], name: "PostAuthor")
-  likes     User[]       @relation("PostLikes")
+  author    User      @relation(fields: [authorId], references: [id], name: "PostAuthor")
+  likes     User[]    @relation("PostLikes")
   media     String[]
   comments  Comment[]
-  
-  @@index([authorId]) 
+
+  @@index([authorId])
 }
 
 model Comment {
@@ -79,10 +105,10 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   postId   String
-  authorId   String
-  author   User?   @relation(fields: [authorId], references: [id])
-  post   Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  likes  User[]  @relation("CommentLikes")
+  authorId String
+  author   User?  @relation(fields: [authorId], references: [id])
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes    User[] @relation("CommentLikes")
 
   @@index([postId])
   @@index([authorId])
@@ -90,12 +116,12 @@ model Comment {
 }
 
 model Application {
-  id             String   @id @default(uuid())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  authorId       String
-  author         User     @relation(fields: [authorId], references: [id])
-  data           Json
+  id              String          @id @default(uuid())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  authorId        String
+  author          User            @relation(fields: [authorId], references: [id])
+  data            Json
   applicationType ApplicationType
 }
 
@@ -107,4 +133,19 @@ model Event {
   poster      String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id          String       @id @default(uuid())
+  createdAt   DateTime     @default(now())
+  name        String
+  description String
+  leadId      String
+  lead        User         @relation(fields: [leadId], references: [id])
+  members     User[]       @relation("ProjectMembers")
+  problem     String
+  approach    String
+  duration    Int
+  budget      Int
+  techStacks  TechStacks[]
 }

@@ -50,6 +50,7 @@ export const authOptions: NextAuthOptions = {
                 if (isPasswordValid) {
                     return {
                         id: user.id,
+                        email: credentials.email,
                         username: user.username ?? '',
                         name: user.name ?? '',
                         regno: user.regno ?? '',
@@ -68,6 +69,7 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
                 token.username = user.username;
+                token.email = user.email;
                 token.regno = user.regno;
                 token.isAdmin = user.isAdmin;
                 token.isBanned = user.isBanned;

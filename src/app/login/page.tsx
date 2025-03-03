@@ -1,18 +1,26 @@
 'use client';
-import { useState } from 'react';
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from 'react';
+import { signIn, useSession } from "next-auth/react";
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function AuthForm() {
   const [isActive, setIsActive] = useState(false);
   const router = useRouter();
-
+  const session = useSession();
+  const pathName = usePathname();
   const toggleForm = () => {
     setIsActive(!isActive);
   };
+
+  useEffect(() => {
+    console.log(pathName);
+    
+    if(session.data?.user&&pathName=='/login')router.push('/dashboard');
+    else if(pathName!='/login') router.push('/login');
+  }, [session]);
 
   const handleSubmit = async (e: React.FormEvent, type: "signin"|"signup") => {
     e.preventDefault();
@@ -27,17 +35,11 @@ export default function AuthForm() {
         if (result?.error) {
             toast.error('❌ Auth failed. Please try again.', {
                 position: "top-right",
-                // autoClose: 3000, // Reduce duration if needed
-                // hideProgressBar: false,
-                // closeOnClick: true,
-                // pauseOnHover: true,
-                // draggable: true,
-                // progress: undefined,
-                // theme: "dark",
-                // transition: Slide,
               });
         } else {
-          router.push("/dashboard"); // Redirect to dashboard on success
+          toast.success('✅ Login successful!', {
+            position: "top-right",
+          });
         }
     }
     else{
@@ -59,27 +61,11 @@ export default function AuthForm() {
         if (response.ok) {
             toast.success('✅ Account created successfully!', {
                 position: "top-right",
-                // autoClose: 3000,
-                // hideProgressBar: false,
-                // closeOnClick: true,
-                // pauseOnHover: true,
-                // draggable: true,
-                // progress: undefined,
-                // theme: "dark",
-                // transition: Slide,
             });
             router.push("/login");
         } else {
             toast.error('❌ Signup failed. Please try again.', {
                 position: "top-right",
-                // autoClose: 3000,
-                // hideProgressBar: false,
-                // closeOnClick: true,
-                // pauseOnHover: true,
-                // draggable: true,
-                // progress: undefined,
-                // theme: "light",
-                // transition: Slide,
             });
         }
     }

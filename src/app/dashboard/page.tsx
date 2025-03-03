@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import InnerLayout from "../innerLayout";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Protected from "../api/auth/Protected";
 
 
 const achievements = [
@@ -78,7 +80,7 @@ export default function DashboardPage() {
     useEffect(() => {
         async function fetchStats() {
             try {
-                const response = await fetch("/api/admin/stats", {method:"POST"});
+                const response = await fetch("/api/admin/stats", { method: "POST" });
                 if (!response.ok) {
                     throw new Error("Failed to fetch stats");
                 }
@@ -86,7 +88,7 @@ export default function DashboardPage() {
                 console.log(data);
                 Object.entries(data).forEach(([key, value]) => {
                     // @ts-ignore-error
-                    setStats((prevStat)=>({...prevStat, [key]:{...prevStat[key], value: value}}));
+                    setStats((prevStat) => ({ ...prevStat, [key]: { ...prevStat[key], value: value } }));
                 });
             } catch (error) {
                 console.error("Error fetching stats:", error);
@@ -94,7 +96,8 @@ export default function DashboardPage() {
         }
         fetchStats();
     }
-    , []);
+        , []);
+    const router = useRouter();
     return (
         <InnerLayout>
             <motion.div
@@ -110,15 +113,18 @@ export default function DashboardPage() {
                             Here's what's happening in RISC Robotics
                         </p>
                     </div>
-                    <Button>
+                    <Button onClick={() => router.push("/projects/create")}>
                         Create New Project
                         <ArrowUpRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {Object.entries(stats).map(([key, stat], index) => (
-                        <motion.div
+                    {Object.entries(stats).map(([key, stat], index) => {
+                        if (key == 'totalUsers' && stat.value == 0) {
+                            return null;
+                        }
+                        return (<motion.div
                             key={key}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -139,7 +145,8 @@ export default function DashboardPage() {
                                 </CardContent>
                             </Card>
                         </motion.div>
-                    ))}
+                        )
+                    })}
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
