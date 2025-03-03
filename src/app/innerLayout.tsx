@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Home, Users, FileText, Settings, UserCircle, MessageSquare, Calendar, Award, Notebook as Robot, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import {
     SheetContent,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
@@ -33,6 +33,12 @@ export default function InnerLayout({
 }) {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const session = useSession();
+    const router = useRouter();
+    useEffect(() => {
+        console.log(pathname);
+        if (!session.data?.user && pathname != '/login') router.push('/login');
+    }, [session]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/80">

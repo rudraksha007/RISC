@@ -122,14 +122,19 @@ enum ApplicationStatus {
 }
 
 model Application {
-  id              String          @id @default(uuid())
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id              String            @id @default(uuid())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   authorId        String
-  author          User            @relation(fields: [authorId], references: [id])
+  author          User              @relation(fields: [authorId], references: [id])
   data            Json
   applicationType ApplicationType
   status          ApplicationStatus
+  projectId       String?
+  project         Project?          @relation(fields: [projectId], references: [id])
+  title           String
+  description     String
+  info            Json?
 }
 
 model Event {
@@ -143,16 +148,17 @@ model Event {
 }
 
 model Project {
-  id          String       @id @default(uuid())
-  createdAt   DateTime     @default(now())
-  name        String
-  description String
-  leadId      String
-  lead        User         @relation(fields: [leadId], references: [id])
-  members     User[]       @relation("ProjectMembers")
-  problem     String
-  approach    String
-  duration    Int
-  budget      Int
-  techStacks  TechStacks[]
+  id           String        @id @default(uuid())
+  createdAt    DateTime      @default(now())
+  name         String
+  description  String
+  leadId       String
+  lead         User          @relation(fields: [leadId], references: [id])
+  members      User[]        @relation("ProjectMembers")
+  problem      String
+  approach     String
+  duration     Int
+  budget       Int
+  techStacks   TechStacks[]
+  applications Application[]
 }

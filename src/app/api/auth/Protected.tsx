@@ -10,19 +10,17 @@ export default function Protected({ children}: { children: React.ReactNode}) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        // console.log(session);
         async function authenticate() {
             if (session.status === 'loading') {
-                return; // Wait for session to load
+                return; 
             }
-            // console.log(session);
             const data = await (await fetch("/api/auth/isAdmin")).json();
             if(!data.isAdmin){
                 router.push('/dashboard');
                 toast.error("You are not authorized to view this page", {
                     position: "top-right",
                 });
-            }
+            }else setIsAuthenticated(true)
         }
         authenticate();
 

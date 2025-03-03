@@ -172,7 +172,7 @@ export default function ProjectsPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={()=>router.push(`/projects/${encodeURIComponent(project.id)}`)}>View Details</DropdownMenuItem>
                                                         <DropdownMenuItem>Edit Project</DropdownMenuItem>
                                                         <DropdownMenuItem>Manage Team</DropdownMenuItem>
                                                     </DropdownMenuContent>
