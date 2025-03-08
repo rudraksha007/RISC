@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +12,7 @@ import {
     Users,
     Code,
     MoreHorizontal,
+    Loader2,
 } from "lucide-react";
 
 import {
@@ -44,20 +45,21 @@ function getStatus(startDate: Date, duration: number) {
 function getProgress(startDate: Date, duration: number) {
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + duration);
-    if(new Date() > endDate) return 100;
-    return Math.floor((new Date().getDate()-new Date(startDate).getDate())/duration);
+    if (new Date() > endDate) return 100;
+    return Math.floor((new Date().getDate() - new Date(startDate).getDate()) / duration);
 }
 
 export default function ProjectsPage() {
     const router = useRouter();
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [currentTab, setCurrentTab] = useState("all");
     const [projects, setProjects] = useState<Project[] | []>([]);
-    const [filteredProjects, setFilteredProjects] = useState<Project[]|[]>([]);
 
     useEffect(() => {
         async function fetchProjects() {
+            setLoading(true);
             try {
                 const response = await fetch("/api/projects");
                 if (!response.ok) {
@@ -69,29 +71,29 @@ export default function ProjectsPage() {
             } catch (error) {
                 console.error("Error fetching projects:", error);
                 toast.error("Failed to fetch projects");
+            } finally {
+                setLoading(false);
             }
         }
         fetchProjects();
     }, []);
 
-    useEffect(()=>{
-        setFilteredProjects(projects.filter((project) => {
-            const matchesSearch =
-                searchQuery === "" ||
-                project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                project.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-            const matchesStatus =
-                statusFilter === "all" || getStatus(project.createdAt, project.duration) === statusFilter;
-    
-            const matchesTab =
-                currentTab === "all" ||
-                (currentTab === "active" && getStatus(project.createdAt, project.duration) === "active") ||
-                (currentTab === "completed" && getStatus(project.createdAt, project.duration) === "completed");
-    
-            return matchesSearch && matchesStatus && matchesTab;
-        }));
-    }, [projects, statusFilter, currentTab]);
+    const filteredProjects = useMemo(() => projects.filter((project) => {
+        const matchesSearch =
+            searchQuery === "" ||
+            project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            project.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesStatus =
+            statusFilter === "all" || getStatus(project.createdAt, project.duration) === statusFilter;
+
+        const matchesTab =
+            currentTab === "all" ||
+            (currentTab === "active" && getStatus(project.createdAt, project.duration) === "active") ||
+            (currentTab === "completed" && getStatus(project.createdAt, project.duration) === "completed");
+
+        return matchesSearch && matchesStatus && matchesTab;
+    }), [projects, statusFilter, currentTab]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -147,8 +149,18 @@ export default function ProjectsPage() {
                     </TabsList>
 
                     <TabsContent value={currentTab} className="mt-6">
+                        {loading &&
+                            <Card className="h-full flex flex-col p-10">
+                                <CardContent className="flex-1 flex flex-col justify-center items-center">
+                                    <Rocket className="h-12 w-12 text-muted-foreground m-2" />
+                                    <h3 className="text-lg font-medium m-2">Loading projects...</h3>
+                                    <Loader2 className="animate-spin" />
+
+                                </CardContent>
+                            </Card>
+                        }
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {filteredProjects.map((project, index) => (
+                            {!loading && filteredProjects.map((project, index) => (
                                 <motion.div
                                     key={project.id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -172,7 +184,7 @@ export default function ProjectsPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={()=>router.push(`/projects/${encodeURIComponent(project.id)}`)}>View Details</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => router.push(`/projects/${encodeURIComponent(project.id)}`)}>View Details</DropdownMenuItem>
                                                         <DropdownMenuItem>Edit Project</DropdownMenuItem>
                                                         <DropdownMenuItem>Manage Team</DropdownMenuItem>
                                                     </DropdownMenuContent>
@@ -237,7 +249,7 @@ export default function ProjectsPage() {
                             ))}
                         </div>
 
-                        {filteredProjects.length === 0 && (
+                        {!loading && filteredProjects.length === 0 && (
                             <div className="text-center py-12">
                                 <Rocket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                                 <h3 className="text-lg font-medium">No projects found</h3>

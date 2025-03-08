@@ -43,10 +43,7 @@ export async function POST(req: Request) {
                 duration: durationInDays,
                 budget: parseFloat(data.budget),
                 techStacks: data.techStacks.map((tech) => (tech.toUpperCase() as TechStacks)),
-                members: {
-                    connect: { id: user?.id }
-                },
-                lead: { connect: { id: user?.id } }
+                lead: { connect: { id: user?.id } } 
             },
         });
 

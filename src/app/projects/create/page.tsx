@@ -103,7 +103,7 @@ export default function CreateProjectPage() {
         try {
             setIsSubmitting(true);
             // await new Promise((resolve) => setTimeout(resolve, 1500));
-            const response = await fetch("/api/newProject", {
+            const response = await fetch("/api/projects/create", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

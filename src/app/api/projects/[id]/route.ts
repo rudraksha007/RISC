@@ -13,13 +13,25 @@ export async function GET(req: Request, {params} : {params: {id: string}}) {
     const project = await prisma.project.findUnique({
         where: { id: decodeURIComponent(params.id) },
         include:{
-            members: true,
-            applications: true
+            members: {
+                include:{
+                    user:{
+                        select:{
+                            id: true,
+                            name: true,
+                            regno: true,
+                            avatar: true
+                        }
+                    }
+                }
+            },
+            applications: true,
+            lead: true
         }
     });
     if (!project) return NextResponse.json({ msg: "Project not found" }, { status: 404 });
     if (!user?.isAdmin) {
-        if (project.members.some((member) => member.id === user.id)) {
+        if (project.members.some((member) => member.id === user.id) || project.leadId === user.id) {
             return NextResponse.json(project, { status: 200 });
         } else {
             return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });

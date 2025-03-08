@@ -9,26 +9,10 @@ export async function GET(req: Request) {
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
         include: {
-            leadProjects: {
-                include: {
-                    members: true
-                }
-            },
-            roles: {
-                include: {
-                    project: true
-                }
-            }
+            mailsIn: true,
+            mailsOut: true
         }
     });
     if (!user) return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });
-    if (!user?.isAdmin) {
-        return NextResponse.json([...user.leadProjects, ...user.roles.map(
-            role => role.project
-        )], { status: 200 });
-    }
-    else {
-        const projects = await prisma.project.findMany();
-        return NextResponse.json(projects, { status: 200 });
-    }
+    return NextResponse.json([...user.mailsIn, ...user.mailsOut], { status: 200 });
 }

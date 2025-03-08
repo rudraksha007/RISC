@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Users, FileText, Settings, UserCircle, MessageSquare, Calendar, Award, Notebook as Robot, Menu, X } from "lucide-react";
+import { Home, Users, FileText, MessageSquare, Notebook as Robot, Menu, X, Inbox, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,13 +12,14 @@ import {
     SheetContent,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { SessionProvider, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
     { name: "Applications", href: "/applications", icon: FileText },
     { name: "Members", href: "/admin/users", icon: Users },
     { name: "Community", href: "/community", icon: MessageSquare },
+    { name: "Inbox", href: "/inbox", icon: Inbox },
     // { name: "Events", href: "/dashboard/events", icon: Calendar },
     { name: "Projects", href: "/projects", icon: Robot },
     // { name: "Achievements", href: "/dashboard/achievements", icon: Award },
@@ -36,7 +37,7 @@ export default function InnerLayout({
     const session = useSession();
     const router = useRouter();
     useEffect(() => {
-        console.log(pathname);
+        if (session.status === "loading") return;
         if (!session.data?.user && pathname != '/login') router.push('/login');
     }, [session]);
 
@@ -115,6 +116,14 @@ export default function InnerLayout({
                                     {item.name}
                                 </Link>
                             ))}
+                            <Link
+                                href={"#"}
+                                onClick={()=>signOut()}
+                                className={"flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors text-red-400 hover:bg-red-50"}
+                            >
+                                <LogOut className="h-5 w-5" />
+                                Log Out
+                            </Link>
                         </div>
                     </div>
                 </motion.nav>

@@ -66,20 +66,43 @@ model User {
   age      Int?
   gender   String?
   username String? @unique
-  avatar   String?
+  avatar   String? @db.Text
   bio      String? @db.Text
   year     Year? // Added the Year enum field
 
   // Relations - Social
   posts        Post[]        @relation("PostAuthor")
   likes        Post[]        @relation("PostLikes")
+  mailsIn      Mail[]        @relation("receiver")
+  mailsOut     Mail[]        @relation("sender")
   commentLikes Comment[]     @relation("CommentLikes")
   applications Application[]
   comments     Comment[]
-  projects     Project[]     @relation("ProjectMembers")
   leadProjects Project[]
+  roles        Role[]
 
   @@index([username])
+}
+
+enum MailType {
+  ANNOUNCEMENT
+  INVITATION
+  NOTIFICATION
+}
+
+model Mail {
+  id        String   @id @default(uuid())
+  title     String   @db.Text
+  content   String   @db.Text
+  read      Boolean  @default(false)
+  starred   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  mailType  MailType
+
+  senderId   String
+  receiverId String
+  sender     User   @relation(fields: [senderId], references: [id], name: "sender")
+  receiver   User   @relation(fields: [receiverId], references: [id], name: "receiver")
 }
 
 model Post {
@@ -147,6 +170,16 @@ model Event {
   updatedAt   DateTime @updatedAt
 }
 
+model Role {
+  id        String  @id @default(uuid())
+  name      String
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+  isAdmin   Boolean @default(false)
+  projectId String
+}
+
 model Project {
   id           String        @id @default(uuid())
   createdAt    DateTime      @default(now())
@@ -154,7 +187,7 @@ model Project {
   description  String
   leadId       String
   lead         User          @relation(fields: [leadId], references: [id])
-  members      User[]        @relation("ProjectMembers")
+  members      Role[]
   problem      String
   approach     String
   duration     Int
